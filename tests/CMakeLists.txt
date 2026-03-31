@@ -116,3 +116,26 @@ target_link_libraries(test_crypto_engine PRIVATE
 )
 
 add_test(NAME test_crypto_engine COMMAND test_crypto_engine)
+
+# TempFile Tests
+add_executable(test_temp_file
+    unit/test_temp_file.cpp
+    ../src/utils/temp_file.cpp
+)
+
+target_include_directories(test_temp_file PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/tests/catch2
+    ${MBEDTLS_INCLUDE_DIRS}
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+)
+
+target_link_libraries(test_temp_file PRIVATE
+    ${MBEDTLS_LIBRARIES}
+    Threads::Threads
+    c++
+)
+
+add_test(NAME test_temp_file COMMAND test_temp_file)
