@@ -25,8 +25,13 @@ if(NOT MBEDTLS_FOUND)
         message(FATAL_ERROR "mbedtls not found. Run: git submodule update --init --recursive")
     endif()
     set(MBEDTLS_INCLUDE_DIRS ${MBEDTLS_DIR}/include)
-    set(MBEDTLS_LIBRARIES mbedtls mbedx509 tfpsacrypto)
+    set(MBEDTLS_LIBRARIES mbedtls mbedx509 mbedcrypto)
     add_subdirectory(${MBEDTLS_DIR} ${CMAKE_BINARY_DIR}/mbedtls)
+
+    # Create alias for backward compatibility
+    if(TARGET tfpsacrypto AND NOT TARGET mbedcrypto)
+        add_library(mbedcrypto ALIAS tfpsacrypto)
+    endif()
 endif()
 
 # Main executable
