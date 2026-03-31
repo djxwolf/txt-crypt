@@ -68,3 +68,27 @@ target_link_libraries(test_base64 PRIVATE
 )
 
 add_test(NAME test_base64 COMMAND test_base64)
+
+# KDF Tests
+add_executable(test_kdf
+    unit/test_kdf.cpp
+    ../src/core/kdf.cpp
+)
+
+target_include_directories(test_kdf PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/tests/catch2
+    ${MBEDTLS_INCLUDE_DIRS}
+    ${CMAKE_SOURCE_DIR}/third_party/mbedtls/tf-psa-crypto/drivers/builtin/include
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+)
+
+target_link_libraries(test_kdf PRIVATE
+    ${MBEDTLS_LIBRARIES}
+    Threads::Threads
+    stdc++
+)
+
+add_test(NAME test_kdf COMMAND test_kdf)
