@@ -15,7 +15,7 @@ struct EncryptionResult {
 
 class CryptoEngine {
 public:
-    explicit CryptoEngine(const SecureString& password);
+    explicit CryptoEngine(SecureString password);
 
     EncryptionResult encrypt(const std::vector<uint8_t>& plaintext);
     std::vector<uint8_t> decrypt(
@@ -37,8 +37,6 @@ public:
 
 private:
     SecureString password_;
-    std::array<uint8_t, KEY_SIZE> derived_key_;
-    bool key_derived_ = false;
 };
 
 } // namespace txtcrypt

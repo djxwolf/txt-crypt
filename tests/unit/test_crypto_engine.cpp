@@ -9,7 +9,7 @@ using namespace txtcrypt;
 
 void test_crypto_encrypt_decrypt() {
     SecureString password("test_password");
-    CryptoEngine engine(password);
+    CryptoEngine engine(std::move(password));
 
     std::vector<uint8_t> plaintext = { 'H', 'e', 'l', 'l', 'o', ' ', 'W', 'o', 'r', 'l', 'd' };
 
@@ -31,7 +31,7 @@ void test_crypto_encrypt_decrypt() {
 
 void test_crypto_different_iv() {
     SecureString password("test_password");
-    CryptoEngine engine(password);
+    CryptoEngine engine(std::move(password));
 
     std::vector<uint8_t> plaintext = { 'T', 'e', 's', 't' };
 
@@ -47,8 +47,8 @@ void test_crypto_wrong_password() {
     SecureString password1("password1");
     SecureString password2("password2");
 
-    CryptoEngine engine1(password1);
-    CryptoEngine engine2(password2);
+    CryptoEngine engine1(std::move(password1));
+    CryptoEngine engine2(std::move(password2));
 
     std::vector<uint8_t> plaintext = { 'S', 'e', 'c', 'r', 'e', 't' };
     auto encrypted = engine1.encrypt(plaintext);
@@ -65,7 +65,7 @@ void test_crypto_wrong_password() {
 
 void test_crypto_empty_plaintext() {
     SecureString password("test_password");
-    CryptoEngine engine(password);
+    CryptoEngine engine(std::move(password));
 
     std::vector<uint8_t> empty;
     auto result = engine.encrypt(empty);
@@ -76,7 +76,7 @@ void test_crypto_empty_plaintext() {
 
 void test_crypto_modified_tag_fails() {
     SecureString password("test_password");
-    CryptoEngine engine(password);
+    CryptoEngine engine(std::move(password));
 
     std::vector<uint8_t> plaintext = { 'A', 'u', 't', 'h' };
     auto encrypted = engine.encrypt(plaintext);

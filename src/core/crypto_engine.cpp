@@ -9,8 +9,8 @@
 
 namespace txtcrypt {
 
-CryptoEngine::CryptoEngine(const SecureString& password)
-    : password_(std::move(const_cast<SecureString&>(password))) {
+CryptoEngine::CryptoEngine(SecureString password)
+    : password_(std::move(password)) {
 }
 
 EncryptionResult CryptoEngine::encrypt(const std::vector<uint8_t>& plaintext) {
@@ -20,7 +20,7 @@ EncryptionResult CryptoEngine::encrypt(const std::vector<uint8_t>& plaintext) {
     auto iv_bytes = random_bytes(IV_SIZE);
     std::copy(iv_bytes.begin(), iv_bytes.end(), result.params.iv.begin());
 
-    derived_key_ = derive_key(password_, result.params.salt);
+    auto derived_key = derive_key(password_, result.params.salt);
 
     result.ciphertext.resize(plaintext.size());
 
@@ -30,11 +30,12 @@ EncryptionResult CryptoEngine::encrypt(const std::vector<uint8_t>& plaintext) {
     int ret = mbedtls_gcm_setkey(
         &ctx,
         MBEDTLS_CIPHER_ID_AES,
-        derived_key_.data(),
+        derived_key.data(),
         KEY_SIZE * 8
     );
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         mbedtls_gcm_free(&ctx);
         throw std::runtime_error("Failed to set GCM key");
     }
@@ -56,11 +57,12 @@ EncryptionResult CryptoEngine::encrypt(const std::vector<uint8_t>& plaintext) {
     mbedtls_gcm_free(&ctx);
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         throw std::runtime_error("Encryption failed");
     }
 
     result.ciphertext.resize(plaintext.size());
-    std::memset(derived_key_.data(), 0, derived_key_.size());
+    std::memset(derived_key.data(), 0, derived_key.size());
 
     return result;
 }
@@ -69,7 +71,7 @@ std::vector<uint8_t> CryptoEngine::decrypt(
     const std::vector<uint8_t>& ciphertext,
     const CryptoParams& params
 ) {
-    derived_key_ = derive_key(password_, params.salt);
+    auto derived_key = derive_key(password_, params.salt);
 
     std::vector<uint8_t> plaintext(ciphertext.size());
 
@@ -79,11 +81,12 @@ std::vector<uint8_t> CryptoEngine::decrypt(
     int ret = mbedtls_gcm_setkey(
         &ctx,
         MBEDTLS_CIPHER_ID_AES,
-        derived_key_.data(),
+        derived_key.data(),
         KEY_SIZE * 8
     );
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         mbedtls_gcm_free(&ctx);
         throw std::runtime_error("Failed to set GCM key");
     }
@@ -104,11 +107,12 @@ std::vector<uint8_t> CryptoEngine::decrypt(
     mbedtls_gcm_free(&ctx);
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         throw std::runtime_error("Decryption failed: authentication error");
     }
 
     plaintext.resize(ciphertext.size());
-    std::memset(derived_key_.data(), 0, derived_key_.size());
+    std::memset(derived_key.data(), 0, derived_key.size());
 
     return plaintext;
 }
@@ -120,7 +124,7 @@ std::vector<uint8_t> CryptoEngine::encrypt_with_params(
     EncryptionResult result;
     result.params = params;
 
-    derived_key_ = derive_key(password_, params.salt);
+    auto derived_key = derive_key(password_, params.salt);
 
     result.ciphertext.resize(plaintext.size());
 
@@ -130,11 +134,12 @@ std::vector<uint8_t> CryptoEngine::encrypt_with_params(
     int ret = mbedtls_gcm_setkey(
         &ctx,
         MBEDTLS_CIPHER_ID_AES,
-        derived_key_.data(),
+        derived_key.data(),
         KEY_SIZE * 8
     );
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         mbedtls_gcm_free(&ctx);
         throw std::runtime_error("Failed to set GCM key");
     }
@@ -156,11 +161,12 @@ std::vector<uint8_t> CryptoEngine::encrypt_with_params(
     mbedtls_gcm_free(&ctx);
 
     if (ret != 0) {
+        std::memset(derived_key.data(), 0, derived_key.size());
         throw std::runtime_error("Encryption failed");
     }
 
     result.ciphertext.resize(plaintext.size());
-    std::memset(derived_key_.data(), 0, derived_key_.size());
+    std::memset(derived_key.data(), 0, derived_key.size());
 
     return result.ciphertext;
 }
