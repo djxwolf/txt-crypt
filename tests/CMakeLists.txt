@@ -92,3 +92,27 @@ target_link_libraries(test_kdf PRIVATE
 )
 
 add_test(NAME test_kdf COMMAND test_kdf)
+
+# Crypto Engine Tests
+add_executable(test_crypto_engine
+    unit/test_crypto_engine.cpp
+    ../src/core/crypto_engine.cpp
+    ../src/core/kdf.cpp
+)
+
+target_include_directories(test_crypto_engine PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/tests/catch2
+    ${MBEDTLS_INCLUDE_DIRS}
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+)
+
+target_link_libraries(test_crypto_engine PRIVATE
+    ${MBEDTLS_LIBRARIES}
+    Threads::Threads
+    stdc++
+)
+
+add_test(NAME test_crypto_engine COMMAND test_crypto_engine)

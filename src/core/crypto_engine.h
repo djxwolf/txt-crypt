@@ -1,0 +1,44 @@
+#pragma once
+
+#include <vector>
+#include <array>
+#include <cstdint>
+#include "core/file_format.h"
+#include "utils/secure_memory.h"
+
+namespace txtcrypt {
+
+struct EncryptionResult {
+    std::vector<uint8_t> ciphertext;
+    CryptoParams params;
+};
+
+class CryptoEngine {
+public:
+    explicit CryptoEngine(const SecureString& password);
+
+    EncryptionResult encrypt(const std::vector<uint8_t>& plaintext);
+    std::vector<uint8_t> decrypt(
+        const std::vector<uint8_t>& ciphertext,
+        const CryptoParams& params
+    );
+
+    std::vector<uint8_t> encrypt_with_params(
+        const std::vector<uint8_t>& plaintext,
+        const CryptoParams& params
+    );
+
+    std::vector<uint8_t> decrypt_with_key(
+        const std::vector<uint8_t>& ciphertext,
+        const std::array<uint8_t, KEY_SIZE>& key,
+        const std::array<uint8_t, IV_SIZE>& iv,
+        const std::array<uint8_t, TAG_SIZE>& tag
+    );
+
+private:
+    SecureString password_;
+    std::array<uint8_t, KEY_SIZE> derived_key_;
+    bool key_derived_ = false;
+};
+
+} // namespace txtcrypt
