@@ -45,3 +45,26 @@ target_link_libraries(test_file_format PRIVATE
 )
 
 add_test(NAME test_file_format COMMAND test_file_format)
+
+# Base64 Tests
+add_executable(test_base64
+    unit/test_base64.cpp
+    ../src/io/base64.cpp
+)
+
+target_include_directories(test_base64 PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/tests/catch2
+    ${MBEDTLS_INCLUDE_DIRS}
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
+)
+
+target_link_libraries(test_base64 PRIVATE
+    ${MBEDTLS_LIBRARIES}
+    Threads::Threads
+    stdc++
+)
+
+add_test(NAME test_base64 COMMAND test_base64)
