@@ -37,11 +37,23 @@ endif()
 # Main executable
 add_executable(txt-crypt
     src/main.cpp
+    src/cli/cli_parser.cpp
+    src/cli/progress.cpp
+    src/core/stream_processor.cpp
+    src/core/crypto_engine.cpp
+    src/core/kdf.cpp
+    src/io/file_reader.cpp
+    src/io/file_writer.cpp
+    src/io/base64.cpp
+    src/utils/error_codes.cpp
+    src/utils/temp_file.cpp
 )
 
 target_include_directories(txt-crypt PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
     ${MBEDTLS_INCLUDE_DIRS}
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
 )
 
 find_package(Threads REQUIRED)

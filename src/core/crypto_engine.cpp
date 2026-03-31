@@ -9,8 +9,8 @@
 
 namespace txtcrypt {
 
-CryptoEngine::CryptoEngine(SecureString password)
-    : password_(std::move(password)) {
+CryptoEngine::CryptoEngine(const SecureString& password)
+    : password_(password.view()) {
 }
 
 EncryptionResult CryptoEngine::encrypt(const std::vector<uint8_t>& plaintext) {
@@ -211,6 +211,120 @@ std::vector<uint8_t> CryptoEngine::decrypt_with_key(
 
     if (ret != 0) {
         throw std::runtime_error("Decryption failed: authentication error");
+    }
+
+    plaintext.resize(ciphertext.size());
+    return plaintext;
+}
+
+ChunkEncryptionResult CryptoEngine::encrypt_chunk(
+    const std::vector<uint8_t>& chunk,
+    const std::array<uint8_t, KEY_SIZE>& key,
+    const std::array<uint8_t, IV_SIZE>& base_iv,
+    uint64_t chunk_index
+) {
+    ChunkEncryptionResult result;
+
+    // Create IV by incrementing base_iv with chunk_index
+    std::array<uint8_t, IV_SIZE> iv = base_iv;
+    uint64_t index = chunk_index;
+    for (size_t i = 0; i < IV_SIZE && index > 0; ++i) {
+        uint32_t sum = static_cast<uint32_t>(iv[IV_SIZE - 1 - i]) + (index & 0xFF);
+        iv[IV_SIZE - 1 - i] = static_cast<uint8_t>(sum & 0xFF);
+        index >>= 8;
+    }
+
+    result.ciphertext.resize(chunk.size());
+
+    mbedtls_gcm_context ctx;
+    mbedtls_gcm_init(&ctx);
+
+    int ret = mbedtls_gcm_setkey(
+        &ctx,
+        MBEDTLS_CIPHER_ID_AES,
+        key.data(),
+        KEY_SIZE * 8
+    );
+
+    if (ret != 0) {
+        mbedtls_gcm_free(&ctx);
+        throw std::runtime_error("Failed to set GCM key");
+    }
+
+    size_t out_len = 0;
+    ret = mbedtls_gcm_crypt_and_tag(
+        &ctx,
+        MBEDTLS_GCM_ENCRYPT,
+        chunk.size(),
+        iv.data(),
+        IV_SIZE,
+        nullptr, 0,
+        chunk.data(),
+        result.ciphertext.data(),
+        TAG_SIZE,
+        result.tag.data()
+    );
+
+    mbedtls_gcm_free(&ctx);
+
+    if (ret != 0) {
+        throw std::runtime_error("Chunk encryption failed");
+    }
+
+    result.ciphertext.resize(chunk.size());
+    return result;
+}
+
+std::vector<uint8_t> CryptoEngine::decrypt_chunk(
+    const std::vector<uint8_t>& ciphertext,
+    const std::array<uint8_t, KEY_SIZE>& key,
+    const std::array<uint8_t, IV_SIZE>& base_iv,
+    uint64_t chunk_index,
+    const std::array<uint8_t, TAG_SIZE>& tag
+) {
+    // Create IV by incrementing base_iv with chunk_index
+    std::array<uint8_t, IV_SIZE> iv = base_iv;
+    uint64_t index = chunk_index;
+    for (size_t i = 0; i < IV_SIZE && index > 0; ++i) {
+        uint32_t sum = static_cast<uint32_t>(iv[IV_SIZE - 1 - i]) + (index & 0xFF);
+        iv[IV_SIZE - 1 - i] = static_cast<uint8_t>(sum & 0xFF);
+        index >>= 8;
+    }
+
+    std::vector<uint8_t> plaintext(ciphertext.size());
+
+    mbedtls_gcm_context ctx;
+    mbedtls_gcm_init(&ctx);
+
+    int ret = mbedtls_gcm_setkey(
+        &ctx,
+        MBEDTLS_CIPHER_ID_AES,
+        key.data(),
+        KEY_SIZE * 8
+    );
+
+    if (ret != 0) {
+        mbedtls_gcm_free(&ctx);
+        throw std::runtime_error("Failed to set GCM key");
+    }
+
+    size_t out_len = 0;
+    ret = mbedtls_gcm_auth_decrypt(
+        &ctx,
+        ciphertext.size(),
+        iv.data(),
+        IV_SIZE,
+        nullptr, 0,
+        tag.data(),
+        TAG_SIZE,
+        ciphertext.data(),
+        plaintext.data()
+    );
+
+    mbedtls_gcm_free(&ctx);
+
+    if (ret != 0) {
+        throw std::runtime_error("Chunk decryption failed: authentication error");
     }
 
     plaintext.resize(ciphertext.size());
