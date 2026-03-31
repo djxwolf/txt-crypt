@@ -1,0 +1,57 @@
+cmake_minimum_required(VERSION 3.15)
+project(txt-crypt VERSION 0.1.0 LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+option(BUILD_TESTS "Build tests" OFF)
+option(ENABLE_THREADS "Enable threading" ON)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
+
+# Find mbedtls
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(MBEDTLS REQUIRED mbedtls)
+endif()
+
+# If not found, use bundled
+if(NOT MBEDTLS_FOUND)
+    set(MBEDTLS_DIR ${CMAKE_SOURCE_DIR}/third_party/mbedtls)
+    if(NOT EXISTS ${MBEDTLS_DIR})
+        message(FATAL_ERROR "mbedtls not found. Run: git submodule update --init --recursive")
+    endif()
+    set(MBEDTLS_INCLUDE_DIRS ${MBEDTLS_DIR}/include)
+    set(MBEDTLS_LIBRARIES mbedtls mbedx509 tfpsacrypto)
+    add_subdirectory(${MBEDTLS_DIR} ${CMAKE_BINARY_DIR}/mbedtls)
+endif()
+
+# Main executable
+add_executable(txt-crypt
+    src/main.cpp
+)
+
+target_include_directories(txt-crypt PRIVATE
+    ${CMAKE_SOURCE_DIR}/include
+    ${MBEDTLS_INCLUDE_DIRS}
+)
+
+find_package(Threads REQUIRED)
+target_link_libraries(txt-crypt PRIVATE
+    ${MBEDTLS_LIBRARIES}
+    Threads::Threads
+)
+
+if(ENABLE_THREADS)
+    target_compile_definitions(txt-crypt PRIVATE TXTCRYPT_ENABLE_THREADS)
+endif()
+
+if(BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif()
+
+install(TARGETS txt-crypt DESTINATION bin)
