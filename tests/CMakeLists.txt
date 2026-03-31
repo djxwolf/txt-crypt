@@ -1,23 +1,25 @@
 find_package(Threads REQUIRED)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(txt_crypt_tests
-    unit/test_base64.cpp
-    unit/test_kdf.cpp
-    unit/test_crypto_engine.cpp
-    unit/test_file_format.cpp
-    unit/test_temp_file.cpp
-    unit/test_integration.cpp
+# Secure String Tests
+add_executable(test_secure_memory
+    unit/test_secure_memory_minimal.cpp
 )
 
-target_include_directories(txt_crypt_tests PRIVATE
+target_include_directories(test_secure_memory PRIVATE
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/tests
+    ${CMAKE_SOURCE_DIR}/tests/catch2
     ${MBEDTLS_INCLUDE_DIRS}
+    /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1
 )
 
-target_link_libraries(txt_crypt_tests PRIVATE
+target_link_libraries(test_secure_memory PRIVATE
     ${MBEDTLS_LIBRARIES}
     Threads::Threads
+    stdc++
 )
 
-add_test(NAME txt_crypt_unit_tests COMMAND txt_crypt_tests)
+add_test(NAME test_secure_memory COMMAND test_secure_memory)
