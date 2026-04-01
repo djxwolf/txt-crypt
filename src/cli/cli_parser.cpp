@@ -4,6 +4,7 @@
 #include "utils/error_codes.h"
 #include "utils/secure_memory.h"
 #include <iostream>
+#include <cstdlib>
 #include <termios.h>
 #include <unistd.h>
 #include <getopt.h>
@@ -37,6 +38,7 @@ Options parse_cli(int argc, char* argv[]) {
     Options options;
     
     static struct option long_options[] = {
+        {"help", no_argument, 0, 'h'},
         {"encrypt", no_argument, 0, 'e'},
         {"decrypt", no_argument, 0, 'd'},
         {"output", required_argument, 0, 'o'},
@@ -46,8 +48,19 @@ Options parse_cli(int argc, char* argv[]) {
     };
 
     int c;
-    while ((c = getopt_long(argc, argv, "edo:iq", long_options, nullptr)) != -1) {
+    while ((c = getopt_long(argc, argv, "he:do:iq", long_options, nullptr)) != -1) {
         switch (c) {
+            case 'h':
+                std::cout << "Usage: txt-crypt [OPTIONS] <input_file...>\n\n"
+                          << "Options:\n"
+                          << "  -h, --help          Show this help message\n"
+                          << "  -e, --encrypt       Encrypt files (default)\n"
+                          << "  -d, --decrypt       Decrypt files\n"
+                          << "  -o, --output FILE   Output file path\n"
+                          << "  -i, --in-place      Process files in place\n"
+                          << "  -q, --no-progress   Disable progress bar\n"
+                          << std::endl;
+                exit(EXIT_SUCCESS);
             case 'e':
                 options.command = Command::ENCRYPT;
                 break;
